@@ -11,3 +11,44 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+#root {
+  height: 100vh;
+}
+
+*,
+*:after,
+*:before {
+  box-sizing: border-box;
+  /* z-index: 3; */
+}
+
+.segment, .food {
+  width: 10px;
+  height: 10px;
+  position: absolute;
+  /* top: 50%;
+  left: 50%; */
+  /* background: black; */
+}
+
+.modal {
+  width: 20%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  background-color: #909090;
+  color: black;
+  text-align: center;
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.modal p {
+  width: 100%;
+}
+
+.modal button {
+  width: 40%;
+}
