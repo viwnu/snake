@@ -100,7 +100,7 @@ class GameField extends React.Component {
         Y: Math.floor(windowHeight*Math.random()/10)*10,
       },
       showModal: false,
-      pauseTick: false,
+      timerID: 0,
     }
   }
   constructor(props) {
@@ -112,19 +112,24 @@ class GameField extends React.Component {
     console.log(this.state.food);
   }
 
-  componentDidMount() {
-    this.timerID = setInterval(
-      () => {
-        if (!this.state.pauseTick) {
+  setTimer() {
+    this.setState((state) => {
+      let timerID = setInterval(
+        () => {
           this.tick();
-        }
-      },
-      100
-    );
+        },
+        100
+      );
+      return {timerID: timerID}
+    });
+  }
+
+  componentDidMount() {
+    this.setTimer();
   }
 
   componentWillUnmount() {
-    clearInterval(this.timerID);
+    clearInterval(this.state.timerID);
   }
 
   handleRestartClick(e) {
@@ -133,6 +138,7 @@ class GameField extends React.Component {
         // как перезапустить таймер?
         return this.initialState(this.state.width, this.state.height);
       });
+      this.setTimer();
     }
     this.setState((state) => {
       return {showModal: false}
@@ -145,10 +151,10 @@ class GameField extends React.Component {
     for (let i = 1; i < segments.length; i++) {
       if(Math.abs(head.X + head.speed.VX - segments[i].X) + Math.abs(head.Y + head.speed.VY - segments[i].Y) === 0) {
         console.log('GAME OVER');
+        clearInterval(this.state.timerID);
         this.setState(state => {
           return {
             showModal: true,
-            pauseTick: true,
           }
         });
       }
