@@ -1,4 +1,7 @@
 import React from 'react';
+import { useState, useCallback } from 'react';
+// import { useEffect } from 'react';
+// import { useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 
@@ -68,6 +71,83 @@ class RestartModal extends React.Component {
   }
 }
 
+function Score(props) {
+  return (
+    <div className="score">
+      <p>Score: {props.score}</p>
+    </div>
+  );
+}
+
+function ShowContinue(props) {
+  if (props.showContinue) {
+    return (
+      <div className="continue_modal">
+        <p>Game paused</p>
+        <p>Press "Space" to continue</p>
+      </div>
+    )
+  }
+}
+
+function Instructions() {
+  return (
+    <ul className="instructions">
+      <li className="instructions__item">
+        <div className="instructions__key_picture"><p>&#8678;</p></div>
+        <div className="instructions__key_decscription"> - Turn left</div>
+      </li>
+      <li className="instructions__item">
+        <div className="instructions__key_picture"><p>&#8680;</p></div>
+        <div className="instructions__key_decscription"> - Turn right</div>
+      </li>
+      <li className="instructions__item">
+        <div className="instructions__key_picture"><p>Space</p></div>
+        <div className="instructions__key_decscription"> - Pause game</div>
+      </li>
+    </ul>
+  )
+}
+
+function MenuButton({opened, onClick}) {
+  return (
+    <div className="menu_button__container"
+      onClick={useCallback(() => onClick(!opened), [opened, onClick])}
+    >
+        <div
+          className={`menu_button ${opened ? 'opened' : ''}` }
+        ></div>
+    </div>
+  )
+}
+
+function MenuList({opened}) {
+  return (
+    <ul className={`menu_list ${opened ? 'menu_active' : ''}` }>
+      <li><button>Continue</button></li>
+      <li><button>Restart</button></li>
+      <li><button>Save</button></li>
+      <li><button>Load</button></li>
+      <li><button>LogOut</button></li>
+    </ul>
+  )
+}
+
+function Menu() {
+  const [opened, setOpened] = useState(false);
+  return (
+    <div className="menu">
+      <MenuButton
+        opened={opened}
+        onClick={setOpened}
+      />
+      <MenuList
+        opened={opened}
+      />
+    </div>
+  )
+}
+
 class GameField extends React.Component {
   initialState(windowWidth, windowHeight) {
     return {
@@ -101,10 +181,14 @@ class GameField extends React.Component {
       },
       showModal: false,
       timerID: 0,
+      score: 0,
+      gamePaused: false,
     }
   }
   constructor(props) {
     super(props);
+    this.updateScore = this.updateScore.bind(this);
+    this.handlePause = this.handlePause.bind(this);
     const windowWidth = Math.floor(+Math.min(window.innerWidth, window.outerWidth)/10)*10;
     const windowHeight = Math.floor(+Math.min(window.innerHeight, window.outerHeight)/10)*10;
     this.state = this.initialState(windowWidth, windowHeight);
@@ -126,22 +210,29 @@ class GameField extends React.Component {
 
   componentDidMount() {
     this.setTimer();
+    document.addEventListener("keydown", (e) => this.handlePause(e));
   }
 
   componentWillUnmount() {
     clearInterval(this.state.timerID);
+    document.removeEventListener("keydown", (e) => this.handlePause(e));
   }
 
   handleRestartClick(e) {
     if(e.target.innerText === 'YES') {
       this.setState((state) => {
-        // как перезапустить таймер?
         return this.initialState(this.state.width, this.state.height);
       });
       this.setTimer();
     }
     this.setState((state) => {
       return {showModal: false}
+    })
+  }
+
+  updateScore() {
+    this.setState((state) => {
+      return {score: state.score + 1}
     })
   }
 
@@ -186,7 +277,28 @@ class GameField extends React.Component {
           snake: {segments},
           food: food,
         }
-      })
+      });
+      this.updateScore();
+    }
+  }
+
+  handlePause(e) {
+    if(e.key === ' ') {
+      if(!this.state.gamePaused) {
+        clearInterval(this.state.timerID);
+        this.setState(state => {
+          return {
+            gamePaused: true,
+          }
+        });
+      } else {
+        this.setState((state) => {
+          return {
+            gamePaused: false,
+          }
+        });
+        this.setTimer();
+      }
     }
   }
 
@@ -252,21 +364,33 @@ class GameField extends React.Component {
   render() {
     return (
       <div>
-        <Snake
-          width = {this.state.width}
-          height = {this.state.height}
-          segments = {this.state.snake.segments}
-          // handleKeyDown = {(e) => this.handleKeyDown(e)}
-          // tick = {() => this.tick()}
-        />
-        <Food
-          X = {this.state.food.X}
-          Y = {this.state.food.Y}
-        />
-        <RestartModal
-          showModal = {this.state.showModal}
-          onClick = {(e) => this.handleRestartClick(e)}
-        />
+        <div className = "snake__container">
+          <Snake
+            width = {this.state.width}
+            height = {this.state.height}
+            segments = {this.state.snake.segments}
+            // handleKeyDown = {(e) => this.handleKeyDown(e)}
+            // tick = {() => this.tick()}
+          />
+          <Food
+            X = {this.state.food.X}
+            Y = {this.state.food.Y}
+          />
+          <RestartModal
+            showModal = {this.state.showModal}
+            onClick = {(e) => this.handleRestartClick(e)}
+          />
+          <ShowContinue
+            showContinue = {this.state.gamePaused}
+          />
+        </div>
+        <div className="interface_container">
+          <Score
+            score = {this.state.score}
+          />
+          <Instructions/>
+          <Menu />
+        </div>
       </div>
     );
   }
